@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OrbitalGuard — Crisis Response Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #020810;
+  --bg2: #050f20;
+  --panel: rgba(5,16,40,0.92);
+  --panel2: rgba(2,12,30,0.95);
+  --border: rgba(0,200,255,0.15);
+  --border2: rgba(0,200,255,0.08);
+  --cyan: #00c8ff;
+  --cyan2: #00eaff;
+  --green: #00ff88;
+  --red: #ff2244;
+  --orange: #ff8800;
+  --yellow: #ffe100;
+  --dim: rgba(0,200,255,0.4);
+  --text: #c0dff5;
+  --muted: rgba(150,200,240,0.45);
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-hud: 'Orbitron', sans-serif;
+  --font-body: 'Exo 2', sans-serif;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ─── STARFIELD ─── */
+#stars {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  animation: twinkle var(--d) ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+@keyframes twinkle {
+  0%,100%{opacity:var(--op);transform:scale(1);}
+  50%{opacity:calc(var(--op)*0.3);transform:scale(0.8);}
+}
+
+/* Grid lines */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0;
+  background-image:
+    linear-gradient(rgba(0,200,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events:none;
+}
+
+/* scanlines */
+body::after {
+  content:'';
+  position:fixed; inset:0; z-index:1;
+  background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px);
+  pointer-events:none;
+}
+
+.everything { position:relative; z-index:2; min-height:100vh; display:flex; flex-direction:column; }
+
+/* ─── HEADER ─── */
+header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 22px;
+  border-bottom:1px solid var(--border);
+  background: linear-gradient(90deg,rgba(0,30,70,0.8),rgba(0,15,40,0.7));
+  backdrop-filter:blur(16px);
+  position:sticky; top:0; z-index:200;
+  flex-shrink: 0;
+}
+
+.logo {
+  display:flex; align-items:center; gap:14px;
+}
+
+.logo-orbit {
+  position:relative; width:42px; height:42px;
+}
+.logo-orbit svg { width:100%; height:100%; }
+
+.logo-text-wrap {}
+.logo-name {
+  font-family:var(--font-hud);
+  font-size:1.25rem; font-weight:900;
+  letter-spacing:0.18em;
+  background: linear-gradient(90deg, var(--cyan2), #88eeff);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 12px rgba(0,210,255,0.6));
+}
+.logo-tagline {
+  font-family:var(--font-mono);
+  font-size:0.58rem; color:var(--muted);
+  letter-spacing:0.22em; margin-top:1px;
+}
+
+.header-center {
+  display:flex; align-items:center; gap:8px;
+}
+
+.incident-banner {
+  display:flex; align-items:center; gap:8px;
+  padding:6px 16px;
+  background:rgba(255,34,68,0.12);
+  border:1px solid rgba(255,34,68,0.4);
+  border-radius:3px;
+  font-family:var(--font-mono);
+  font-size:0.68rem; color:var(--red);
+  letter-spacing:0.1em;
+  animation:pulse-border 1.5s ease-in-out infinite;
+}
+@keyframes pulse-border {
+  0%,100%{box-shadow:0 0 6px rgba(255,34,68,0.2);}
+  50%{box-shadow:0 0 20px rgba(255,34,68,0.5);}
+}
+.incident-dot { width:8px;height:8px;border-radius:50%;background:var(--red);animation:blink 0.8s step-start infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+.header-right { display:flex;align-items:center;gap:18px; }
+
+.stat-pill {
+  display:flex;flex-direction:column;align-items:center;
+  font-family:var(--font-mono);
+}
+.stat-pill .val {
+  font-size:1.1rem; font-weight:700;
+  font-family:var(--font-hud);
+}
+.stat-pill .lbl { font-size:0.55rem; color:var(--muted); letter-spacing:0.1em; }
+.stat-pill.red .val { color:var(--red); text-shadow:0 0 10px rgba(255,34,68,0.6); }
+.stat-pill.orange .val { color:var(--orange); text-shadow:0 0 10px rgba(255,136,0,0.6); }
+.stat-pill.cyan .val { color:var(--cyan2); text-shadow:0 0 10px rgba(0,200,255,0.6); }
+
+.clock-box {
+  font-family:var(--font-mono);
+  font-size:0.9rem; color:var(--cyan);
+  letter-spacing:0.12em;
+  padding: 4px 12px;
+  border:1px solid var(--border);
+  border-radius:3px;
+  background:rgba(0,200,255,0.05);
+}
+
+/* ─── MAIN ─── */
+.main {
+  display:grid;
+  grid-template-columns: 280px 1fr 270px;
+  grid-template-rows: 1fr;
+  gap:10px;
+  padding:10px 14px;
+  flex:1;
+  min-height: calc(100vh - 62px);
+}
+
+/* ─── PANELS ─── */
+.panel {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:5px;
+  backdrop-filter:blur(12px);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+.panel::before {
+  content:''; position:absolute; top:0; left:20%; right:20%; height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:0.5;
+}
+
+.ph {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 14px;
+  border-bottom:1px solid var(--border2);
+  background:rgba(0,20,50,0.5);
+  flex-shrink:0;
+}
+.ph-title {
+  font-family:var(--font-hud);
+  font-size:0.6rem; font-weight:700;
+  letter-spacing:0.25em; color:var(--cyan);
+}
+.ph-badge {
+  font-family:var(--font-mono); font-size:0.58rem;
+  padding:2px 8px; border-radius:2px;
+  letter-spacing:0.06em;
+}
+.b-red{background:rgba(255,34,68,0.15);color:var(--red);border:1px solid rgba(255,34,68,0.35);}
+.b-green{background:rgba(0,255,136,0.08);color:var(--green);border:1px solid rgba(0,255,136,0.3);}
+.b-cyan{background:rgba(0,200,255,0.08);color:var(--cyan);border:1px solid rgba(0,200,255,0.3);}
+.b-orange{background:rgba(255,136,0,0.12);color:var(--orange);border:1px solid rgba(255,136,0,0.35);}
+
+/* ─── LEFT: SATELLITE STATUS ─── */
+.left-panel { grid-column:1; overflow:hidden; }
+
+.sat-list { padding:6px; overflow-y:auto; flex:1; }
+.sat-list::-webkit-scrollbar{width:3px;}
+.sat-list::-webkit-scrollbar-track{background:transparent;}
+.sat-list::-webkit-scrollbar-thumb{background:rgba(0,200,255,0.2);border-radius:2px;}
+
+.sat-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:4px; margin-bottom:4px;
+  border:1px solid transparent;
+  cursor:pointer; transition:all 0.2s;
+}
+.sat-item:hover{background:rgba(0,200,255,0.05);border-color:rgba(0,200,255,0.2);}
+.sat-item.s-ok{border-color:rgba(0,255,136,0.08);}
+.sat-item.s-warn{background:rgba(255,136,0,0.04);border-color:rgba(255,136,0,0.15);}
+.sat-item.s-crit{background:rgba(255,34,68,0.06);border-color:rgba(255,34,68,0.2);}
+
+.sat-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.dot-ok{background:var(--green);box-shadow:0 0 8px var(--green);}
+.dot-warn{background:var(--orange);box-shadow:0 0 8px var(--orange);animation:pwarn 1.5s ease-in-out infinite;}
+.dot-crit{background:var(--red);box-shadow:0 0 10px var(--red);animation:pcrit 0.9s ease-in-out infinite;}
+@keyframes pwarn{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes pcrit{0%,100%{opacity:1;box-shadow:0 0 10px var(--red);}50%{opacity:0.5;box-shadow:0 0 20px var(--red);}}
+
+.sat-info{flex:1;min-width:0;}
+.sat-name{font-family:var(--font-mono);font-size:0.7rem;color:var(--text);}
+.sat-sub{font-family:var(--font-mono);font-size:0.58rem;color:var(--muted);margin-top:1px;}
+
+.sat-signal{display:flex;align-items:flex-end;gap:2px;height:14px;flex-shrink:0;}
+.sbar{width:3px;border-radius:1px;}
+
+/* Anomaly score mini bar */
+.anom-row{display:flex;align-items:center;gap:6px;margin-top:3px;}
+.anom-bar-bg{flex:1;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+.anom-bar-fill{height:100%;border-radius:2px;transition:width 1s ease;}
+.anom-val{font-family:var(--font-mono);font-size:0.58rem;flex-shrink:0;width:28px;text-align:right;}
+
+/* ─── CENTER ─── */
+.center-col {
+  grid-column:2;
+  display:flex; flex-direction:column; gap:10px;
+}
+
+/* Globe/Map panel */
+.globe-panel { flex:1; min-height:0; }
+#globe-wrap {
+  width:100%; height:100%; position:relative; overflow:hidden;
+  background: radial-gradient(ellipse at 50% 50%, #001830 0%, #000810 100%);
+}
+#globe-canvas { width:100%; height:100%; display:block; }
+
+/* Alert feed */
+.alert-panel { height:230px; flex-shrink:0; }
+.alert-feed { overflow-y:auto; flex:1; padding:6px 10px; }
+.alert-feed::-webkit-scrollbar{width:3px;}
+.alert-feed::-webkit-scrollbar-thumb{background:rgba(0,200,255,0.2);border-radius:2px;}
+
+.alert-item {
+  display:flex; align-items:flex-start; gap:8px;
+  padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04);
+  animation:slide-in 0.4s ease-out;
+}
+@keyframes slide-in{from{opacity:0;transform:translateX(-10px);}to{opacity:1;transform:none;}}
+
+.alert-sev {
+  font-family:var(--font-mono); font-size:0.6rem;
+  padding:1px 6px; border-radius:2px; flex-shrink:0; margin-top:2px;
+  letter-spacing:0.06em;
+}
+.sev-crit{background:rgba(255,34,68,0.2);color:var(--red);border:1px solid rgba(255,34,68,0.4);}
+.sev-high{background:rgba(255,136,0,0.15);color:var(--orange);border:1px solid rgba(255,136,0,0.3);}
+.sev-med{background:rgba(255,225,0,0.1);color:var(--yellow);border:1px solid rgba(255,225,0,0.25);}
+.sev-info{background:rgba(0,200,255,0.08);color:var(--cyan);border:1px solid rgba(0,200,255,0.2);}
+
+.alert-body{flex:1;}
+.alert-msg{font-family:var(--font-body);font-size:0.72rem;color:var(--text);line-height:1.4;}
+.alert-meta{font-family:var(--font-mono);font-size:0.58rem;color:var(--muted);margin-top:2px;}
+
+/* ─── RIGHT ─── */
+.right-col { grid-column:3; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+
+/* AI Engine */
+.ai-panel { flex-shrink:0; }
+.ai-body { padding:12px 14px; }
+
+.ai-gauge-wrap {
+  position:relative; width:120px; height:60px; margin:0 auto 10px;
+  overflow:hidden;
+}
+.gauge-svg { width:100%; }
+
+.ai-status {
+  text-align:center;
+  font-family:var(--font-mono); font-size:0.65rem;
+  color:var(--red); letter-spacing:0.08em;
+  animation:flicker 3s ease-in-out infinite;
+}
+@keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:0.4}94%{opacity:1}96%{opacity:0.6}97%{opacity:1}}
+
+.ai-metrics { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px; }
+.ai-metric {
+  background:rgba(0,10,30,0.6); border:1px solid var(--border2);
+  border-radius:3px; padding:6px 8px; text-align:center;
+}
+.ai-metric .mv { font-family:var(--font-hud); font-size:1rem; font-weight:700; }
+.ai-metric .ml { font-family:var(--font-mono); font-size:0.55rem; color:var(--muted); letter-spacing:0.08em; margin-top:1px; }
+.mv-red{color:var(--red);text-shadow:0 0 8px rgba(255,34,68,0.5);}
+.mv-cyan{color:var(--cyan2);text-shadow:0 0 8px rgba(0,200,255,0.4);}
+.mv-green{color:var(--green);text-shadow:0 0 8px rgba(0,255,136,0.4);}
+.mv-orange{color:var(--orange);}
+
+/* Sector status */
+.sector-panel { flex:1; overflow:hidden; }
+.sector-list { padding:8px 10px; overflow-y:auto; flex:1; }
+.sector-list::-webkit-scrollbar{width:3px;}
+.sector-list::-webkit-scrollbar-thumb{background:rgba(0,200,255,0.2);}
+
+.sector-item {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 8px; border-radius:3px; margin-bottom:4px;
+  border:1px solid transparent; background:rgba(0,10,25,0.4);
+  cursor:pointer; transition:all 0.2s;
+}
+.sector-item:hover{border-color:rgba(0,200,255,0.2);}
+.sec-icon { font-size:1.1rem; flex-shrink:0; width:28px; text-align:center; }
+.sec-info{flex:1;min-width:0;}
+.sec-name{font-family:var(--font-body);font-weight:600;font-size:0.72rem;color:var(--text);}
+.sec-detail{font-family:var(--font-mono);font-size:0.58rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sec-badge{font-family:var(--font-mono);font-size:0.58rem;padding:2px 7px;border-radius:2px;flex-shrink:0;}
+
+/* Crowdsource heatmap strip */
+.heat-panel { flex-shrink:0; height:140px; }
+.heat-body { padding:8px 12px; flex:1; }
+.heat-map {
+  width:100%; height:70px; position:relative;
+  background: linear-gradient(135deg,#000a1a,#001230);
+  border-radius:4px; overflow:hidden; border:1px solid var(--border2);
+  margin-bottom:6px;
+}
+.heat-dot {
+  position:absolute; border-radius:50%;
+  animation:pulse-heat var(--pd) ease-in-out infinite;
+}
+@keyframes pulse-heat{0%,100%{transform:scale(1);opacity:var(--op);}50%{transform:scale(1.6);opacity:calc(var(--op)*0.5);}}
+.heat-stats { display:flex; gap:10px; }
+.heat-stat { font-family:var(--font-mono); font-size:0.62rem; color:var(--muted); }
+.heat-stat span { color:var(--cyan); font-weight:700; }
+
+/* ─── SIMULATE BUTTON ─── */
+.sim-bar {
+  padding:8px 14px 10px;
+  display:flex; gap:8px; align-items:center;
+  border-top:1px solid var(--border2);
+  flex-shrink:0;
+}
+.btn-sim {
+  flex:1; padding:8px 14px;
+  font-family:var(--font-hud); font-size:0.65rem; font-weight:700;
+  letter-spacing:0.15em;
+  border:none; border-radius:3px; cursor:pointer;
+  transition:all 0.2s; position:relative; overflow:hidden;
+}
+.btn-sim.primary {
+  background: linear-gradient(135deg, rgba(255,34,68,0.8), rgba(180,0,40,0.9));
+  color:white;
+  box-shadow:0 0 20px rgba(255,34,68,0.3);
+}
+.btn-sim.primary:hover{box-shadow:0 0 30px rgba(255,34,68,0.5);transform:translateY(-1px);}
+.btn-sim.secondary {
+  background: rgba(0,200,255,0.1);
+  color:var(--cyan); border:1px solid rgba(0,200,255,0.3);
+}
+.btn-sim.secondary:hover{background:rgba(0,200,255,0.15);box-shadow:0 0 15px rgba(0,200,255,0.2);}
+.btn-sim.danger {
+  background: rgba(255,136,0,0.15);
+  color:var(--orange); border:1px solid rgba(255,136,0,0.35);
+}
+
+/* ─── TOAST ─── */
+#toast-container {
+  position:fixed; top:70px; right:16px; z-index:500;
+  display:flex; flex-direction:column; gap:6px;
+  pointer-events:none;
+}
+.toast {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:4px;
+  font-family:var(--font-mono); font-size:0.68rem; letter-spacing:0.06em;
+  backdrop-filter:blur(12px);
+  animation:toast-in 0.3s ease-out, toast-out 0.3s ease-in 3.7s forwards;
+  pointer-events:all;
+  max-width:320px;
+}
+.toast-crit{background:rgba(255,34,68,0.2);border:1px solid rgba(255,34,68,0.5);color:#ff8899;}
+.toast-info{background:rgba(0,200,255,0.12);border:1px solid rgba(0,200,255,0.4);color:var(--cyan);}
+.toast-ok{background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);}
+@keyframes toast-in{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
+@keyframes toast-out{to{opacity:0;transform:translateX(20px);}}
+
+/* ─── INCIDENT MODAL ─── */
+#incident-overlay {
+  position:fixed; inset:0; z-index:300;
+  background:rgba(0,0,0,0.7); backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity 0.3s;
+}
+#incident-overlay.show{opacity:1;pointer-events:all;}
+.incident-box {
+  background:var(--panel2); border:1px solid rgba(255,34,68,0.5);
+  border-radius:6px; padding:28px 32px; max-width:500px; width:90%;
+  box-shadow:0 0 60px rgba(255,34,68,0.3);
+  animation:box-in 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes box-in{from{transform:scale(0.85);opacity:0;}to{transform:none;opacity:1;}}
+.ib-title{font-family:var(--font-hud);font-size:0.75rem;letter-spacing:0.2em;color:var(--red);margin-bottom:4px;}
+.ib-name{font-family:var(--font-hud);font-size:1.4rem;font-weight:900;color:white;margin-bottom:16px;}
+.ib-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+.ib-key{font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);}
+.ib-val{font-family:var(--font-mono);font-size:0.65rem;color:var(--text);}
+.ib-actions{display:flex;gap:8px;margin-top:16px;}
+.ib-btn{flex:1;padding:9px;border-radius:3px;font-family:var(--font-hud);font-size:0.62rem;letter-spacing:0.12em;cursor:pointer;border:none;transition:all 0.2s;}
+.ib-dispatch{background:rgba(255,34,68,0.8);color:white;}
+.ib-dispatch:hover{background:rgba(255,34,68,1);}
+.ib-close{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.1);}
+.ib-close:hover{border-color:rgba(255,255,255,0.3);color:var(--text);}
+
+/* timeline */
+.ib-timeline{margin:14px 0;}
+.ib-tl-title{font-family:var(--font-mono);font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;margin-bottom:8px;}
+.tl-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.tl-text{font-family:var(--font-mono);font-size:0.62rem;color:var(--text);}
+.tl-time{font-family:var(--font-mono);font-size:0.58rem;color:var(--muted);margin-left:auto;}
+
+/* Scrollbar global */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(0,200,255,0.15);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div class="everything">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-orbit">
+      <svg viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="21" cy="21" r="6" fill="rgba(0,200,255,0.15)" stroke="#00c8ff" stroke-width="1.5"/>
+        <circle cx="21" cy="21" r="3" fill="#00eaff"/>
+        <ellipse cx="21" cy="21" rx="20" ry="8" stroke="rgba(0,200,255,0.5)" stroke-width="1" fill="none"/>
+        <ellipse cx="21" cy="21" rx="20" ry="8" stroke="rgba(0,200,255,0.25)" stroke-width="1" fill="none" transform="rotate(60 21 21)"/>
+        <ellipse cx="21" cy="21" rx="20" ry="8" stroke="rgba(0,200,255,0.25)" stroke-width="1" fill="none" transform="rotate(120 21 21)"/>
+        <circle cx="41" cy="21" r="2.5" fill="#00ff88">
+          <animateTransform attributeName="transform" type="rotate" from="0 21 21" to="360 21 21" dur="4s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="1" cy="21" r="2" fill="#ff8800">
+          <animateTransform attributeName="transform" type="rotate" from="360 21 21" to="0 21 21" dur="7s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+    </div>
+    <div class="logo-text-wrap">
+      <div class="logo-name">ORBITALGUARD</div>
+      <div class="logo-tagline">AI-POWERED SPACE CRISIS RESPONSE PLATFORM</div>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <div class="incident-banner">
+      <div class="incident-dot"></div>
+      <span id="header-incident">ACTIVE INCIDENT: GPS CONSTELLATION DEGRADED</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="stat-pill red">
+      <div class="val" id="hdr-affected">847M</div>
+      <div class="lbl">USERS AFFECTED</div>
+    </div>
+    <div class="stat-pill orange">
+      <div class="val" id="hdr-sats">3</div>
+      <div class="lbl">SATS CRITICAL</div>
+    </div>
+    <div class="stat-pill cyan">
+      <div class="val" id="hdr-alerts">128</div>
+      <div class="lbl">ALERTS SENT</div>
+    </div>
+    <div class="clock-box" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<!-- MAIN GRID -->
+<div class="main">
+
+  <!-- LEFT: SATELLITE STATUS -->
+  <div class="panel left-panel">
+    <div class="ph">
+      <span class="ph-title">SATELLITE CONSTELLATION</span>
+      <span class="ph-badge b-red">3 CRITICAL</span>
+    </div>
+    <div class="sat-list" id="sat-list"></div>
+    <div class="sim-bar">
+      <button class="btn-sim primary" onclick="triggerIncident()">⚡ SIMULATE OUTAGE</button>
+      <button class="btn-sim secondary" onclick="resetSim()">↺ RESET</button>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center-col">
+
+    <!-- Globe/Heatmap -->
+    <div class="panel globe-panel">
+      <div class="ph">
+        <span class="ph-title">GLOBAL OUTAGE HEATMAP</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span style="font-family:var(--font-mono);font-size:0.6rem;color:var(--muted);">CROWDSOURCED REPORTS</span>
+          <span class="ph-badge b-orange" id="report-count">2,847 REPORTS</span>
+        </div>
+      </div>
+      <div id="globe-wrap">
+        <canvas id="globe-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Alert Feed -->
+    <div class="panel alert-panel">
+      <div class="ph">
+        <span class="ph-title">REAL-TIME ALERT FEED</span>
+        <span class="ph-badge b-cyan" id="alert-badge">LIVE</span>
+      </div>
+      <div class="alert-feed" id="alert-feed"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right-col">
+
+    <!-- AI Engine -->
+    <div class="panel ai-panel">
+      <div class="ph">
+        <span class="ph-title">AI ANOMALY ENGINE</span>
+        <span class="ph-badge b-red">ANOMALY DETECTED</span>
+      </div>
+      <div class="ai-body">
+        <!-- gauge -->
+        <div class="ai-gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 120 65">
+            <defs>
+              <linearGradient id="ggrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#00ff88"/>
+                <stop offset="50%" stop-color="#ff8800"/>
+                <stop offset="100%" stop-color="#ff2244"/>
+              </linearGradient>
+            </defs>
+            <!-- track -->
+            <path d="M10 60 A50 50 0 0 1 110 60" stroke="rgba(255,255,255,0.08)" stroke-width="8" fill="none" stroke-linecap="round"/>
+            <!-- fill -->
+            <path id="gauge-fill" d="M10 60 A50 50 0 0 1 110 60" stroke="url(#ggrad)" stroke-width="8" fill="none" stroke-linecap="round"
+                  stroke-dasharray="157" stroke-dashoffset="40"/>
+            <!-- needle -->
+            <line id="gauge-needle" x1="60" y1="60" x2="60" y2="18" stroke="#ff2244" stroke-width="2" stroke-linecap="round"
+                  transform="rotate(55 60 60)"/>
+            <circle cx="60" cy="60" r="4" fill="#ff2244"/>
+            <!-- label -->
+            <text x="60" y="52" text-anchor="middle" font-family="Orbitron" font-size="11" fill="#ff2244" font-weight="700">78%</text>
+            <text x="10" y="74" font-family="Share Tech Mono" font-size="7" fill="rgba(150,200,240,0.4)">NOMINAL</text>
+            <text x="84" y="74" font-family="Share Tech Mono" font-size="7" fill="rgba(150,200,240,0.4)">CRITICAL</text>
+          </svg>
+        </div>
+        <div class="ai-status" id="ai-status">⚠ ANOMALY SCORE: HIGH RISK DETECTED</div>
+        <div class="ai-metrics">
+          <div class="ai-metric">
+            <div class="mv mv-red" id="anom-score">78%</div>
+            <div class="ml">ANOMALY SCORE</div>
+          </div>
+          <div class="ai-metric">
+            <div class="mv mv-cyan" id="pred-eta">12 MIN</div>
+            <div class="ml">PREDICTED FAIL</div>
+          </div>
+          <div class="ai-metric">
+            <div class="mv mv-green" id="conf-score">94.2%</div>
+            <div class="ml">CONFIDENCE</div>
+          </div>
+          <div class="ai-metric">
+            <div class="mv mv-orange" id="sats-at-risk">7 SATS</div>
+            <div class="ml">AT RISK</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sector Coordination -->
+    <div class="panel sector-panel">
+      <div class="ph">
+        <span class="ph-title">SECTOR COORDINATION</span>
+        <span class="ph-badge b-orange">4 ALERTING</span>
+      </div>
+      <div class="sector-list" id="sector-list"></div>
+    </div>
+
+    <!-- Crowdsource heat -->
+    <div class="panel heat-panel">
+      <div class="ph">
+        <span class="ph-title">CROWDSOURCE REPORTS</span>
+        <span class="ph-badge b-cyan" id="live-reports">LIVE</span>
+      </div>
+      <div class="heat-body">
+        <div class="heat-map" id="heat-map"></div>
+        <div class="heat-stats">
+          <div class="heat-stat">Reports: <span id="hs-total">2,847</span></div>
+          <div class="heat-stat">Regions: <span id="hs-regions">34</span></div>
+          <div class="heat-stat">Peak: <span id="hs-peak">Mumbai</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- INCIDENT MODAL -->
+<div id="incident-overlay">
+  <div class="incident-box">
+    <div class="ib-title">🛰 CRITICAL INCIDENT DETECTED</div>
+    <div class="ib-name" id="ib-name">GPS Block III Satellite Failure</div>
+    <div class="ib-row"><span class="ib-key">SATELLITE ID</span><span class="ib-val" id="ib-satid">GPS-IIF-12</span></div>
+    <div class="ib-row"><span class="ib-key">ANOMALY SCORE</span><span class="ib-val" style="color:var(--red)">92.4% — CRITICAL</span></div>
+    <div class="ib-row"><span class="ib-key">ESTIMATED IMPACT</span><span class="ib-val" id="ib-impact">847M users, 12 countries</span></div>
+    <div class="ib-row"><span class="ib-key">SECTORS AFFECTED</span><span class="ib-val">Aviation, Banking, Maritime</span></div>
+    <div class="ib-row"><span class="ib-key">PREDICTED FAILURE</span><span class="ib-val" style="color:var(--orange)">12 min from now</span></div>
+    <div class="ib-timeline">
+      <div class="ib-tl-title">RESPONSE TIMELINE</div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--green)"></div><span class="tl-text">AI anomaly detected</span><span class="tl-time">T+0s</span></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--cyan)"></div><span class="tl-text">Alerts sent to 128 agencies</span><span class="tl-time">T+4s</span></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--orange)"></div><span class="tl-text">Aviation rerouting initiated</span><span class="tl-time">T+18s</span></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--red)"></div><span class="tl-text">Government dashboard activated</span><span class="tl-time">T+22s</span></div>
+    </div>
+    <div class="ib-actions">
+      <button class="ib-btn ib-dispatch" onclick="dispatchResponse()">🚨 DISPATCH RESPONSE</button>
+      <button class="ib-btn ib-close" onclick="closeModal()">DISMISS</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STAR FIELD ───────────────────────────────────────────────────────────────
+(function() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() < 0.85 ? 1 : Math.random() < 0.6 ? 1.5 : 2;
+    const op = 0.2 + Math.random() * 0.6;
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*4}s;--op:${op};opacity:${op};`;
+    c.appendChild(s);
+  }
+})();
+
+// ─── CLOCK ───────────────────────────────────────────────────────────────────
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    n.toUTCString().slice(17,25) + ' UTC';
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const SATS = [
+  {id:'GPS-IIF-12', name:'GPS IIF-12', orbit:'MEO 20,200km', status:'crit', anom:92, signal:[4,4,4,4,2], region:'N. America'},
+  {id:'GPS-III-05', name:'GPS III-05', orbit:'MEO 20,200km', status:'crit', anom:85, signal:[4,4,4,3,1], region:'Pacific'},
+  {id:'INSAT-3DR',  name:'INSAT-3DR',  orbit:'GEO 35,786km', status:'warn', anom:62, signal:[4,4,3,2,2], region:'Indian Ocean'},
+  {id:'GLONASS-24', name:'GLONASS K2-24', orbit:'MEO 19,100km', status:'warn', anom:51, signal:[4,4,4,3,2], region:'Eurasia'},
+  {id:'GSAT-29',   name:'GSAT-29',   orbit:'GEO 35,786km', status:'warn', anom:44, signal:[4,4,4,4,3], region:'South Asia'},
+  {id:'STARLINK-G5',name:'Starlink G5-0912',orbit:'LEO 550km',  status:'ok',  anom:12, signal:[4,4,4,4,4], region:'Global'},
+  {id:'GOES-16',   name:'GOES-16',   orbit:'GEO 35,786km', status:'ok',  anom:8,  signal:[4,4,4,4,4], region:'Americas'},
+  {id:'SENTINEL-6',name:'Sentinel-6A',orbit:'LEO 1,336km',  status:'ok',  anom:5,  signal:[4,4,4,4,4], region:'Europe'},
+  {id:'BEIDOU-G8', name:'BeiDou G8',  orbit:'GEO 35,786km', status:'ok',  anom:3,  signal:[4,4,4,4,4], region:'Asia-Pac'},
+  {id:'GPS-III-01',name:'GPS III-01', orbit:'MEO 20,200km', status:'crit',anom:88, signal:[4,4,3,1,1], region:'Atlantic'},
+];
+
+const SECTORS = [
+  {icon:'✈️', name:'Aviation',    detail:'128 flights affected — rerouting',  badge:'ALERTING',  bc:'b-red'},
+  {icon:'🏦', name:'Banking / FinTech', detail:'GPS timing sync disrupted', badge:'ALERTING',  bc:'b-red'},
+  {icon:'🚢', name:'Maritime',    detail:'AIS signal degraded — 34 vessels', badge:'ALERTING',  bc:'b-orange'},
+  {icon:'🚑', name:'Emergency Svcs', detail:'Navigation rerouted to GLONASS', badge:'STANDBY',   bc:'b-orange'},
+  {icon:'📡', name:'Telecom',     detail:'Network sync nominal',             badge:'NOMINAL',   bc:'b-green'},
+  {icon:'⚡', name:'Power Grid',  detail:'Sync fallback active',             badge:'NOMINAL',   bc:'b-green'},
+];
+
+const ALERTS_INITIAL = [
+  {sev:'crit', sev_lbl:'CRITICAL', msg:'GPS-IIF-12 telemetry anomaly: signal dropout detected. Failure predicted in 12 minutes.', src:'AI ENGINE', time:'00:00:04'},
+  {sev:'high', sev_lbl:'HIGH',     msg:'128 alert notifications dispatched to aviation & maritime sectors via API.', src:'ALERT SYSTEM', time:'00:00:08'},
+  {sev:'med',  sev_lbl:'MEDIUM',   msg:'Crowdsource reports spike: 2,847 GPS failures reported across 34 regions in last 4 min.', src:'CROWDSOURCE', time:'00:00:12'},
+  {sev:'high', sev_lbl:'HIGH',     msg:'Aviation sector: 128 flights activated GLONASS fallback. Mumbai, Dubai hubs on hold.', src:'AVIATION', time:'00:00:18'},
+  {sev:'info', sev_lbl:'INFO',     msg:'Misinformation shield active. Verified status updates pushed to X, Telegram.', src:'COMMS', time:'00:00:22'},
+  {sev:'med',  sev_lbl:'MEDIUM',   msg:'GPS-III-01 secondary anomaly detected. Escalating to CRITICAL threshold.', src:'AI ENGINE', time:'00:00:31'},
+];
+
+let alertCount = 0;
+let simRunning = false;
+let simTimer = null;
+let reportCount = 2847;
+let alertsSent = 128;
+
+// ─── RENDER SATELLITES ────────────────────────────────────────────────────────
+function renderSats() {
+  const el = document.getElementById('sat-list');
+  el.innerHTML = '';
+  SATS.forEach(s => {
+    const colors = {crit:'var(--red)',warn:'var(--orange)',ok:'var(--green)'};
+    const anomColor = s.anom > 70 ? 'var(--red)' : s.anom > 40 ? 'var(--orange)' : 'var(--green)';
+    const div = document.createElement('div');
+    div.className = `sat-item s-${s.status}`;
+    div.innerHTML = `
+      <div class="sat-dot dot-${s.status}"></div>
+      <div class="sat-info">
+        <div class="sat-name">${s.name}</div>
+        <div class="sat-sub">${s.orbit} · ${s.region}</div>
+        <div class="anom-row">
+          <div class="anom-bar-bg"><div class="anom-bar-fill" style="width:${s.anom}%;background:${anomColor};"></div></div>
+          <div class="anom-val" style="color:${anomColor}">${s.anom}%</div>
+        </div>
+      </div>
+      <div class="sat-signal">${s.signal.map((h,i)=>`<div class="sbar" style="height:${3+h*2}px;background:${h<3?colors[s.status]:'rgba(0,200,255,0.3)'};"></div>`).join('')}</div>`;
+    div.onclick = () => showSatModal(s);
+    el.appendChild(div);
+  });
+}
+
+// ─── RENDER SECTORS ───────────────────────────────────────────────────────────
+function renderSectors() {
+  const el = document.getElementById('sector-list');
+  el.innerHTML = '';
+  SECTORS.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'sector-item';
+    div.innerHTML = `
+      <div class="sec-icon">${s.icon}</div>
+      <div class="sec-info">
+        <div class="sec-name">${s.name}</div>
+        <div class="sec-detail">${s.detail}</div>
+      </div>
+      <div class="sec-badge ${s.bc}">${s.badge}</div>`;
+    el.appendChild(div);
+  });
+}
+
+// ─── RENDER INITIAL ALERTS ────────────────────────────────────────────────────
+function renderAlerts(alerts) {
+  const el = document.getElementById('alert-feed');
+  el.innerHTML = '';
+  alerts.forEach(a => addAlertItem(a, false));
+}
+
+function addAlertItem(a, prepend=true) {
+  const el = document.getElementById('alert-feed');
+  const sev_class = {crit:'sev-crit',high:'sev-high',med:'sev-med',info:'sev-info'}[a.sev];
+  const div = document.createElement('div');
+  div.className = 'alert-item';
+  div.innerHTML = `
+    <div class="alert-sev ${sev_class}">${a.sev_lbl}</div>
+    <div class="alert-body">
+      <div class="alert-msg">${a.msg}</div>
+      <div class="alert-meta">${a.src} · ${a.time} UTC</div>
+    </div>`;
+  if (prepend && el.firstChild) el.insertBefore(div, el.firstChild);
+  else el.appendChild(div);
+}
+
+// ─── GLOBE CANVAS ─────────────────────────────────────────────────────────────
+const canvas = document.getElementById('globe-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, globeR, cx, cy;
+let hotspots = [];
+let orbitAngle = 0;
+
+function initHotspots() {
+  const centers = [
+    {x:0.18,y:0.38,intensity:0.9,label:'N. America'},
+    {x:0.47,y:0.35,intensity:0.85,label:'Europe'},
+    {x:0.6,y:0.42,intensity:1.0,label:'South Asia'},
+    {x:0.73,y:0.45,intensity:0.7,label:'SE Asia'},
+    {x:0.28,y:0.55,intensity:0.6,label:'S. America'},
+    {x:0.52,y:0.55,intensity:0.5,label:'Africa'},
+  ];
+  hotspots = centers.map(c => ({
+    x: c.x * W, y: c.y * H,
+    r: 20 + Math.random()*30,
+    intensity: c.intensity,
+    label: c.label,
+    phase: Math.random()*Math.PI*2
+  }));
+}
+
+function resizeCanvas() {
+  const wrap = document.getElementById('globe-wrap');
+  W = canvas.width = wrap.offsetWidth;
+  H = canvas.height = wrap.offsetHeight;
+  globeR = Math.min(W, H) * 0.38;
+  cx = W / 2; cy = H / 2;
+  initHotspots();
+}
+
+function drawGlobe(t) {
+  ctx.clearRect(0,0,W,H);
+
+  // Space bg
+  const bg = ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.7);
+  bg.addColorStop(0,'#001530');
+  bg.addColorStop(1,'#000508');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  // World map - simplified continent shapes
+  drawWorldMap(t);
+
+  // Heatmap overlay
+  drawHeatmap(t);
+
+  // Satellite orbits
+  drawOrbits(t);
+
+  // Incident epicenter
+  drawEpicenter(t);
+
+  // Grid lines
+  drawGrid();
+}
+
+function drawWorldMap(t) {
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.strokeStyle = 'rgba(0,200,255,0.6)';
+  ctx.lineWidth = 0.5;
+  ctx.fillStyle = 'rgba(0,80,140,0.3)';
+
+  // N America
+  ctx.beginPath();
+  ctx.moveTo(W*0.06,H*0.20); ctx.lineTo(W*0.28,H*0.20);
+  ctx.lineTo(W*0.30,H*0.30); ctx.lineTo(W*0.24,H*0.35);
+  ctx.lineTo(W*0.16,H*0.50); ctx.lineTo(W*0.10,H*0.45);
+  ctx.lineTo(W*0.06,H*0.30); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // S America
+  ctx.beginPath();
+  ctx.moveTo(W*0.20,H*0.52); ctx.lineTo(W*0.30,H*0.52);
+  ctx.lineTo(W*0.32,H*0.62); ctx.lineTo(W*0.25,H*0.78);
+  ctx.lineTo(W*0.18,H*0.70); ctx.lineTo(W*0.16,H*0.60);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  // Europe
+  ctx.beginPath();
+  ctx.moveTo(W*0.42,H*0.18); ctx.lineTo(W*0.54,H*0.18);
+  ctx.lineTo(W*0.55,H*0.30); ctx.lineTo(W*0.48,H*0.35);
+  ctx.lineTo(W*0.42,H*0.30); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Africa
+  ctx.beginPath();
+  ctx.moveTo(W*0.44,H*0.36); ctx.lineTo(W*0.58,H*0.36);
+  ctx.lineTo(W*0.60,H*0.50); ctx.lineTo(W*0.54,H*0.68);
+  ctx.lineTo(W*0.48,H*0.68); ctx.lineTo(W*0.44,H*0.54);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  // Asia
+  ctx.beginPath();
+  ctx.moveTo(W*0.54,H*0.18); ctx.lineTo(W*0.88,H*0.18);
+  ctx.lineTo(W*0.90,H*0.28); ctx.lineTo(W*0.78,H*0.40);
+  ctx.lineTo(W*0.68,H*0.45); ctx.lineTo(W*0.60,H*0.38);
+  ctx.lineTo(W*0.56,H*0.30); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Australia
+  ctx.beginPath();
+  ctx.moveTo(W*0.72,H*0.58); ctx.lineTo(W*0.86,H*0.58);
+  ctx.lineTo(W*0.88,H*0.70); ctx.lineTo(W*0.78,H*0.72);
+  ctx.lineTo(W*0.72,H*0.66); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawHeatmap(t) {
+  hotspots.forEach(h => {
+    const pulse = 0.7 + 0.3 * Math.sin(t * 0.002 + h.phase);
+    const grad = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, h.r * (1 + pulse * 0.4));
+    grad.addColorStop(0, `rgba(255,30,60,${0.55 * h.intensity * pulse})`);
+    grad.addColorStop(0.4, `rgba(255,100,0,${0.3 * h.intensity * pulse})`);
+    grad.addColorStop(0.7, `rgba(255,200,0,${0.12 * h.intensity * pulse})`);
+    grad.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.r * (1.4 + pulse * 0.5), 0, Math.PI*2);
+    ctx.fillStyle = grad; ctx.fill();
+
+    // Label
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.font = `10px "Share Tech Mono"`;
+    ctx.fillStyle = 'rgba(255,180,180,0.9)';
+    ctx.fillText(h.label, h.x + 4, h.y - h.r * 0.4);
+    ctx.restore();
+  });
+}
+
+function drawOrbits(t) {
+  // Satellite icons moving in orbit
+  const sats = [
+    {rx:W*0.38, ry:H*0.18, speed:0.0004, color:'#00ff88', label:'GPS', phase:0},
+    {rx:W*0.32, ry:H*0.14, speed:0.0007, color:'#ff8800', label:'INSAT', phase:2},
+    {rx:W*0.42, ry:H*0.20, speed:0.0003, color:'#ff2244', label:'GPS-IIF-12', phase:4},
+  ];
+  sats.forEach(s => {
+    const angle = t * s.speed + s.phase;
+    const x = cx + s.rx * Math.cos(angle);
+    const y = cy + s.ry * Math.sin(angle);
+    // Orbit ellipse
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, s.rx, s.ry, 0, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+    // Satellite dot
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI*2);
+    ctx.fillStyle = s.color;
+    ctx.shadowColor = s.color;
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.restore();
+    // Label
+    ctx.save();
+    ctx.font = '9px "Share Tech Mono"';
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = 0.8;
+    ctx.fillText(s.label, x+6, y-4);
+    ctx.restore();
+  });
+}
+
+function drawEpicenter(t) {
+  // Pulsing epicenter in N America (GPS failure zone)
+  const ex = W * 0.16, ey = H * 0.36;
+  const pulse = Math.sin(t * 0.003) * 0.5 + 0.5;
+  for (let i = 3; i >= 1; i--) {
+    const r = 14 + i * 14 + pulse * 10;
+    ctx.beginPath();
+    ctx.arc(ex, ey, r, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(255,34,68,${0.5 - i * 0.12})`;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.arc(ex, ey, 6, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,34,68,0.9)';
+  ctx.shadowColor = 'rgba(255,34,68,0.8)';
+  ctx.shadowBlur = 20;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.font = 'bold 10px "Share Tech Mono"';
+  ctx.fillStyle = '#ff2244';
+  ctx.fillText('⚠ EPICENTER', ex + 10, ey - 4);
+}
+
+function drawGrid() {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,200,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 6; i++) {
+    ctx.beginPath();
+    ctx.moveTo(W*i/6, 0); ctx.lineTo(W*i/6, H);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, H*i/6); ctx.lineTo(W, H*i/6);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+let animFrame;
+function animateGlobe() {
+  drawGlobe(performance.now());
+  animFrame = requestAnimationFrame(animateGlobe);
+}
+
+// ─── HEATMAP DOTS ─────────────────────────────────────────────────────────────
+function renderHeatmapDots() {
+  const map = document.getElementById('heat-map');
+  map.innerHTML = '';
+  const dots = [
+    {x:15,y:40,c:'255,34,68',s:14,op:0.8,pd:'2s'},
+    {x:28,y:25,c:'255,136,0',s:10,op:0.7,pd:'2.5s'},
+    {x:42,y:50,c:'255,34,68',s:16,op:0.9,pd:'1.8s'},
+    {x:55,y:30,c:'255,200,0',s:9,op:0.6,pd:'3s'},
+    {x:60,y:45,c:'255,34,68',s:12,op:0.85,pd:'2.2s'},
+    {x:70,y:35,c:'255,136,0',s:8,op:0.65,pd:'2.8s'},
+    {x:80,y:50,c:'0,200,255',s:7,op:0.5,pd:'3.5s'},
+    {x:88,y:30,c:'0,200,255',s:6,op:0.4,pd:'4s'},
+  ];
+  dots.forEach(d => {
+    const dot = document.createElement('div');
+    dot.className = 'heat-dot';
+    dot.style.cssText = `left:${d.x}%;top:${d.y}%;width:${d.s}px;height:${d.s}px;background:rgba(${d.c},${d.op});--pd:${d.pd};--op:${d.op};transform:translate(-50%,-50%);`;
+    map.appendChild(dot);
+  });
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `<span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 4200);
+}
+
+// ─── SIMULATION ───────────────────────────────────────────────────────────────
+const SIM_ALERTS = [
+  {delay:500,  sev:'crit', sev_lbl:'CRITICAL', msg:'GPS-IIF-12 TOTAL FAILURE: Signal completely lost. 847M users offline.', src:'AI ENGINE'},
+  {delay:1500, sev:'high', sev_lbl:'HIGH',     msg:'Emergency broadcast sent to 12 national aviation authorities via Twilio SMS.', src:'ALERT SYSTEM'},
+  {delay:2500, sev:'crit', sev_lbl:'CRITICAL', msg:'Mumbai, Dubai airports: ground holds activated. 128 flights in holding patterns.', src:'AVIATION'},
+  {delay:3500, sev:'high', sev_lbl:'HIGH',     msg:'Banking sector: ATM GPS timing failover to GLONASS. 94% transactions nominal.', src:'BANKING'},
+  {delay:5000, sev:'med',  sev_lbl:'MEDIUM',   msg:'Crowdsource reports: 8,400 GPS failure reports in last 90 seconds — 12 countries.', src:'CROWDSOURCE'},
+  {delay:6500, sev:'info', sev_lbl:'INFO',     msg:'Misinformation shield: 3 viral false reports flagged. Corrections pushed to 2.1M followers.', src:'COMMS'},
+  {delay:8000, sev:'high', sev_lbl:'HIGH',     msg:'Maritime sector: 34 vessels switched to dead reckoning. Coast guard notified.', src:'MARITIME'},
+  {delay:10000,sev:'info', sev_lbl:'INFO',     msg:'Recovery ETA: 47 minutes. Backup satellite GPS-IIF-11 being brought online.', src:'AI ENGINE'},
+];
+
+function triggerIncident() {
+  if (simRunning) return;
+  simRunning = true;
+  document.getElementById('incident-overlay').classList.add('show');
+
+  // Update header stats
+  document.getElementById('hdr-affected').textContent = '847M';
+  document.getElementById('hdr-sats').textContent = '5';
+  document.getElementById('hdr-alerts').textContent = '256';
+
+  // Worsen some satellites
+  SATS[0].anom = 100; SATS[0].status = 'crit';
+  SATS[1].anom = 95;  SATS[1].status = 'crit';
+  SATS[2].anom = 78;  SATS[2].status = 'crit';
+  renderSats();
+
+  SIM_ALERTS.forEach(a => {
+    setTimeout(() => {
+      const now = new Date();
+      a.time = now.toUTCString().slice(17,25);
+      addAlertItem(a);
+      if (a.sev === 'crit') showToast('🚨 ' + a.msg.slice(0,60) + '...', 'crit');
+      else if (a.sev === 'info') showToast('ℹ ' + a.msg.slice(0,60), 'info');
+    }, a.delay);
+  });
+
+  // Escalate report count
+  let count = reportCount;
+  simTimer = setInterval(() => {
+    count += Math.floor(Math.random() * 180 + 80);
+    reportCount = count;
+    document.getElementById('report-count').textContent = count.toLocaleString() + ' REPORTS';
+    document.getElementById('hs-total').textContent = count.toLocaleString();
+    alertsSent += Math.floor(Math.random() * 12 + 5);
+    document.getElementById('hdr-alerts').textContent = alertsSent;
+  }, 800);
+}
+
+function closeModal() {
+  document.getElementById('incident-overlay').classList.remove('show');
+}
+
+function dispatchResponse() {
+  closeModal();
+  showToast('✅ Response dispatched to 128 agencies', 'ok');
+  setTimeout(() => showToast('✈️ Aviation rerouting confirmed — 128 flights', 'ok'), 900);
+  setTimeout(() => showToast('🏦 Banking failover active — 94% transactions OK', 'ok'), 1800);
+
+  // Update sector badges
+  SECTORS[0].badge = 'REROUTING'; SECTORS[0].bc = 'b-orange';
+  SECTORS[1].badge = 'FAILOVER';  SECTORS[1].bc = 'b-orange';
+  SECTORS[3].badge = 'ACTIVE';    SECTORS[3].bc = 'b-red';
+  renderSectors();
+}
+
+function showSatModal(s) {
+  document.getElementById('ib-name').textContent = s.name + ' — ' + s.orbit;
+  document.getElementById('ib-satid').textContent = s.id;
+  document.getElementById('ib-impact').textContent = s.anom > 70 ? '847M users, 12 countries' : 'Localised — monitoring';
+  if (s.status === 'crit') document.getElementById('incident-overlay').classList.add('show');
+  else showToast('📡 ' + s.name + ' — Anomaly: ' + s.anom + '% — ' + s.orbit, 'info');
+}
+
+function resetSim() {
+  if (simTimer) clearInterval(simTimer);
+  simRunning = false;
+  reportCount = 2847; alertsSent = 128;
+  document.getElementById('hdr-affected').textContent = '847M';
+  document.getElementById('hdr-sats').textContent = '3';
+  document.getElementById('hdr-alerts').textContent = '128';
+  document.getElementById('report-count').textContent = '2,847 REPORTS';
+  document.getElementById('hs-total').textContent = '2,847';
+  SATS[0].anom=92; SATS[1].anom=85; SATS[2].anom=62;
+  SATS[0].status='crit'; SATS[1].status='crit'; SATS[2].status='warn';
+  renderSats();
+  SECTORS[0].badge='ALERTING'; SECTORS[0].bc='b-red';
+  SECTORS[1].badge='ALERTING'; SECTORS[1].bc='b-red';
+  SECTORS[3].badge='STANDBY';  SECTORS[3].bc='b-orange';
+  renderSectors();
+  renderAlerts(ALERTS_INITIAL);
+  showToast('↺ Simulation reset', 'info');
+}
+
+// ─── LIVE DATA UPDATES ────────────────────────────────────────────────────────
+const LIVE_ALERTS = [
+  {sev:'info', sev_lbl:'INFO', msg:'Telemetry check: 6 satellites nominal, 3 degraded, 1 critical.', src:'AI ENGINE'},
+  {sev:'med',  sev_lbl:'MEDIUM', msg:'INSAT-3DR signal variability detected. Monitoring increased to 15s intervals.', src:'AI ENGINE'},
+  {sev:'info', sev_lbl:'INFO', msg:'Crowdsource: 847 new reports from South Asia in last 60 seconds.', src:'CROWDSOURCE'},
+  {sev:'high', sev_lbl:'HIGH', msg:'GLONASS K2-24 degradation confirmed. Switching aviation to Galileo backup.', src:'AVIATION'},
+  {sev:'info', sev_lbl:'INFO', msg:'Social media monitoring: 0 false narratives active. Situation comms stable.', src:'COMMS'},
+];
+let liveIdx = 0;
+setInterval(() => {
+  if (!simRunning) {
+    const a = LIVE_ALERTS[liveIdx % LIVE_ALERTS.length];
+    a.time = new Date().toUTCString().slice(17,25);
+    addAlertItem({...a});
+    liveIdx++;
+    const feed = document.getElementById('alert-feed');
+    while(feed.children.length > 18) feed.removeChild(feed.lastChild);
+  }
+}, 6000);
+
+// Animate anomaly scores slightly
+setInterval(() => {
+  SATS.forEach(s => {
+    if (s.status !== 'ok') {
+      s.anom = Math.min(100, Math.max(s.anom - 2, s.anom + Math.floor(Math.random()*5-2)));
+    }
+  });
+  renderSats();
+}, 3000);
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => { resizeCanvas(); });
+resizeCanvas();
+animateGlobe();
+renderSats();
+renderSectors();
+renderAlerts(ALERTS_INITIAL);
+renderHeatmapDots();
+</script>
+</body>
+</html>
